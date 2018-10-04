@@ -1,4 +1,4 @@
-# Aszteroida övezet (nyomógomb)
+﻿# Aszteroida övezet (nyomógomb)
 
 Írjátok meg az alábbi játékot az STK3700-as kártyára! A feladat minél több aszteroida kikerülése egy űrhajóval.
 
@@ -17,3 +17,31 @@ után nehezíthető a játék az űrhajó sebességének megnövelésével.
 * a mit.bme.hu letöltésben található példaprogramot átmásoltam a `main.c`-be, pótoltam a hiányzó `delay()` függvényt és feltöltöttem a programot a fejlesztőpanelre: az LCD panelen helyesen megjelent a példaprogram eredménye
 * feltűnt egy hardware-es probléma: hogy ha egyszerre nagyon sok szegmens van elsötétítve, a környező nem használt szegmensek is kis mértékben elsötétedtek
 * github.com repo létrehozása, fejlesztési dokumentáció indítása
+
+2018-10-2:
+*direction enum hozzáadása a projekthez
+*player_t struktúra átalakítása: velocity kivétele, direction hozzáadása
+*random szám generátor hozzáadása a projekthez
+*aszteroida generáló elkészítése és tesztelése
+*display függvények megírása és tesztelése, még van velük némi probléma
+*is_hit függvény megírása
+*kezdetleges over függvény megírása
+*turn_f függvény struktúrája
+
+2018-10-4:
+*display kijavítása azáltal, hogy globális változóvá tettem a segmentField tömböt
+*erase függvények megírása és tesztelése
+*move függvény megírása és tesztelése
+*levelup függvény megírása és tesztelése
+*main elkezdése: 
+	-szükséges változók
+	-aszteroidák generálása
+	-hajó és aszteroidák kijelzése
+	-elsődleges loop
+	-másodlagos loop(irányválasztáshoz és időzítéshez kell)
+	-move meghívása
+	-levelup meghívása
+	-is_hit meghívása
+	-over meghívása
+
+ami még hiányzik gombok kezelése és így a fordulás is, valamint a tizedespontok villogtatása játék vége esetén, plusz a biztonsági megoldások
