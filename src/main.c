@@ -49,6 +49,10 @@ vector2_t asteroids[ASTEROID_COUNT];
 
 SegmentLCD_SegmentData_TypeDef segmentField[7];
 
+#define BUTTON_PORT gpioPortB
+#define PB0 9
+#define PB1 10
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
@@ -193,7 +197,7 @@ int random(int min_num, int max_num)
     return result;
 }
 
-void create_asteroids(vector2_t* asteroids){
+void create_asteroids(){
 	int8_t x, y;
 	x = random(1,6);/*az elsõ 14-szegmens kijelzõre nem teszünk aszteroidát, mert felesleges 1: a hajó mellé kerül, ekkor egyel kevesebb aszteroidát kell kikerülni 2: a hajóval egy mezõre kerül, ekkor azonnal vége a játéknak*/
 	y = random(0,4);/*kijelzõnként csak 5 szegmenst(középsõ kettõt egynek véve) használunk, a kijelzésnél az itt sorsolt számot dekódoljuk*/
@@ -207,16 +211,16 @@ void create_asteroids(vector2_t* asteroids){
 		x = random(1,6);
 		y = random(0,4);
 
-		while(3 == a_count[x]){
+		while(a_count[x] == 3){
 			x = random(1,6);
 		}
 
-		if(0 == a_count[x]){
+		if(a_count[x] == 0){
 			asteroids[i].x = x;
 			asteroids[i].y = y;
 			a_count[x]++;
 		}
-		else if(1 == a_count[x]){
+		else if(a_count[x] == 1){
 			int z = 0;
 			while(!(asteroids[z].x == x)){
 				z++;
@@ -228,7 +232,7 @@ void create_asteroids(vector2_t* asteroids){
 			asteroids[i].y = y;
 			a_count[x]++;
 		}
-		else if(2 == a_count[x]){
+		else if(a_count[x] == 2){
 			int z = 0;
 			int ny[2];
 			for(int k = 0; k < i; k++){
@@ -331,93 +335,122 @@ void erase_asteroids(){
 		erase(asteroids[i]);
 }
 
+//beállítja a LED-eket annak megfelelõen, hogy merre fog fordulni a hajó
+void turn_signal(int turn){
+	if(turn < 0){
+		BSP_LedClear(0);
+		BSP_LedClear(1);
+		BSP_LedSet(1);
+	}
+	if(turn > 0){
+		BSP_LedClear(0);
+		BSP_LedClear(1);
+		BSP_LedSet(0);
+	}
+	if(turn == 0){
+		BSP_LedClear(0);
+		BSP_LedClear(1);
+	}
+}
+
 ///////////////////////////////////////////////////////
 ///////////////////////Mozgás/////////////////////////
 
-//TODO: gomb érzékelés mondjuk int visszatéréssel és a kész függvény meghívása a turn_f függvény if feltételeiben
-
+//gomb érzékelése, fordulás, még lehetne finomítani
 int turn_f(int turn){
 	int i = turn;
-	if(i == -2)//balra gomb kiértékelése még hiányzik
-		i--;//balra
-	if(i == 2)//jobbra gomb kiértékelése még hiányzik
-		i++;//jobbra
+
+	//balra
+	if(!(GPIO_PinInGet(BUTTON_PORT, PB0))){
+		i--;
+		return i;
+	}
+
+	//jobbra
+	else if(!(GPIO_PinInGet(BUTTON_PORT, PB1))){
+		i++;
+		return i;
+	}
+
 	return i;
 }
 
-void move(player_t* ship, int turn){
+//a hajó mozgásáért felelõs függvény
+void move(int turn){
 	erase_ship();
 	//nem akarunk fordulni
-	if(0 == turn){
-		if(ship->direction == Up || ship->direction == Down){
-			if(ship->position.y == 3)
-				ship->position.y = 4;
-			if(ship->position.y == 4)
-				ship->position.y = 3;
+	if(turn == 0){
+		if(ship.direction == Up || ship.direction == Down){
+			if(ship.position.y == 3)
+				ship.position.y = 4;
+			else if(ship.position.y == 4)
+				ship.position.y = 3;
 		}
-		if(ship->direction == Forward)
-			ship->position.x++;
+		if(ship.direction == Forward)
+			ship.position.x++;
 	}
 
 	//balra akarunk fordulni
-	if(0 > turn){
-		if(ship->direction == Up){
-			if(ship->position.y == 3)
-				ship->position.y = 4;
-			if(ship->position.y == 4)
-				ship->position.y = 3;
+	if(turn < 0){
+		if(ship.direction == Up){
+			if(ship.position.y == 3)
+				ship.position.y = 4;
+			else if(ship.position.y == 4)
+				ship.position.y = 3;
 		}
 
-		if(ship->direction == Down){
-			if(ship->position.y == 3)
-				ship->position.y = 1;
-			if(ship->position.y == 4)
-				ship->position.y = 2;
-			ship->direction = Forward;
+		else if(ship.direction == Down){
+			if(ship.position.y == 3)
+				ship.position.y = 1;
+			if(ship.position.y == 4)
+				ship.position.y = 2;
+			ship.direction = Forward;
 		}
 
-		if(ship->direction == Forward){
-			if(ship->position.y == 0){
-				ship->position.y = 4;
+		else if(ship.direction == Forward){
+			if(ship.position.y == 0){
+				ship.position.y = 4;
 			}
-			if(ship->position.y == 1){
-				ship->position.y = 3;
+			if(ship.position.y == 1){
+				ship.position.y = 3;
 			}
-			if(ship->position.y == 2){
-				ship->position.y = 4;
+			if(ship.position.y == 2){
+				ship.position.y = 4;
 			}
-			ship->direction = Up;
+			ship.position.x++;
+			ship.direction = Up;
 		}
 	}
 
 	//jobbra akarunk fordulni
-	if (0 < turn){
-		if(ship->direction == Up){
-			if(ship->position.y == 3)
-				ship->position.y = 0;
-			if(ship->position.y == 4)
-				ship->position.y = 1;
-			ship->direction = Forward;
+	if (turn > 0){
+		if(ship.direction == Up){
+			if(ship.position.y == 3)
+				ship.position.y = 0;
+			if(ship.position.y == 4)
+				ship.position.y = 1;
+			ship.direction = Forward;
 		}
 
-		if(ship->direction == Down){
-			if(ship->position.y == 3)
-				ship->position.y = 4;
-			if(ship->position.y == 4)
-				ship->position.y = 3;
+		else if(ship.direction == Down){
+			if(ship.position.y == 3)
+				ship.position.y = 4;
+			else if(ship.position.y == 4)
+				ship.position.y = 3;
 		}
 
-		if(ship->direction == Forward){
-			if(ship->position.y == 0){
-				ship->position.y = 3;
+		else if(ship.direction == Forward){
+			if(ship.position.y == 0){
+				ship.position.y = 3;
 			}
-			if(ship->position.y == 1){
-				ship->position.y = 4;
+			if(ship.position.y == 1){
+				ship.position.y = 4;
 			}
-			if(ship->position.y == 2){
-				ship->position.y = 3;
+			if(ship.position.y == 2){
+				ship.position.y = 3;
 			}
-			ship->direction = Down;
+			ship.position.x++;
+			ship.direction = Down;
 		}
 	}
 }
@@ -430,19 +463,20 @@ void is_hit(bool* end){
 	}
 }
 
-void level_up(player_t* ship, int score){
-	if(7 == ship->position.x){
+int level_up(int score){
+	if(ship.position.x == 7){
 		erase_asteroids();
-		ship->position.x = 0;
-		ship->position.y = 1;
-		ship->direction = Forward;
+		ship.position.x = 0;
 		score++;
 		create_asteroids(asteroids);
 		display_asteroids();
 		display_ship();
+		SegmentLCD_Number(score);
+		return score;
 	}
 	else{
 		display_ship();
+		return score;
 	}
 }
 
@@ -454,13 +488,26 @@ void level_up(player_t* ship, int score){
 void over(){
 	erase_ship();
 	erase_asteroids();
-	while(1){
+	BSP_LedClear(0);
+	BSP_LedClear(1);
+	for(int i = 0; i < 5; i++){
 		SegmentLCD_Write("GAME");
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP2, 1);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP3, 1);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP4, 1);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP5, 1);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP6, 1);
 		Delay(1000);
 		SegmentLCD_Write("OVER");
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP2, 0);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP3, 0);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP4, 0);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP5, 0);
+	    SegmentLCD_Symbol(LCD_SYMBOL_DP6, 0);
 		Delay(1000);
-		//TODO: tizedespont villogtatás
+
 	}
+	SegmentLCD_AllOff();
 }
 
 
@@ -483,33 +530,81 @@ int main(void)
     while (1) ;
   }
 
-CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);
+  CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);
+
+  // Enable GPIO peripheral clock
+  CMU_ClockEnable(cmuClock_GPIO, true);
+
+  // Configure PB0 as input with pull-up enabled
+  GPIO_PinModeSet(BUTTON_PORT, PB0, gpioModeInputPull, 1);
+  // Configure PB1 as input with pull-up enabled
+  GPIO_PinModeSet(BUTTON_PORT, PB1, gpioModeInputPull, 1);
+
   /* Initialize LED driver */
   BSP_LedsInit();
-  BSP_LedSet(0);
 
+  /* Enable all segments */
+  SegmentLCD_AllOn();
+  BSP_LedSet(0);
+  BSP_LedSet(1);
+  Delay(2000);
+
+  /* Disable all segments */
+  SegmentLCD_AllOff();
+  BSP_LedClear(0);
+  BSP_LedClear(1);
+  Delay(2000);
 
 
   int score = 0;
-  uint16_t turn;
+  int turn = 0;
   int a = 0;
+  int turn_before = 0;
   bool end = false;
 
-  create_asteroids(asteroids);
+  create_asteroids();
 
   display_ship();
   display_asteroids();
+  SegmentLCD_Number(score);
 
   while (!end) {
 	  turn = 0;
-	  a = 0;
-	  while(5000000*(1/(score+1)) > a){
-		  //fordulás függvény meghívása
-		  a++;
+	  BSP_LedClear(0);
+	  BSP_LedClear(1);
+	  if(score < 10){
+		  a = 1000000 - (100000 * score);
+		  while(a > 0){
+		  	  turn_before = turn;
+		  	  turn = turn_f(turn);
+		  	  if(!(turn_before == turn))
+			  	  turn_signal(turn);
+		  a--;
+	  	  }
+	  }
+	  else if((score >= 10) && (score < 31)){
+		  a = 100000 - (3000 * score);
+		  while(a > 0){
+		   	  turn_before = turn;
+		   	  turn = turn_f(turn);
+		   	  if(!(turn_before == turn))
+		   		  turn_signal(turn);
+		   	  a--;
+		  }
+	  }
+	  else if(score >= 31){
+		  a = 10000;
+		  while(a > 0){
+			  turn_before = turn;
+		  	  turn = turn_f(turn);
+		  	  if(!(turn_before == turn))
+		  		  turn_signal(turn);
+		  	  a--;
+		  	  }
 	  }
 
-	  move(&ship, turn);
-	  level_up(&ship, score);
+	  move(turn);
+	  score = level_up(score);
 	  is_hit(&end);
   }
 

@@ -33,15 +33,8 @@ után nehezíthető a játék az űrhajó sebességének megnövelésével.
 *erase függvények megírása és tesztelése
 *move függvény megírása és tesztelése
 *levelup függvény megírása és tesztelése
-*main elkezdése: 
-	-szükséges változók
-	-aszteroidák generálása
-	-hajó és aszteroidák kijelzése
-	-elsődleges loop
-	-másodlagos loop(irányválasztáshoz és időzítéshez kell)
-	-move meghívása
-	-levelup meghívása
-	-is_hit meghívása
-	-over meghívása
-
-ami még hiányzik gombok kezelése és így a fordulás is, valamint a tizedespontok villogtatása játék vége esetén, plusz a biztonsági megoldások
+*gombkezelés
+*turn_f függvény megírása
+*over kiegészítése
+*main megírása
+*Jelenleg működőképes a játék, csak az elején túl lassú, a végén meg játszhatatlanul gyors, ezzel még foglalkozni kellene egy kicsit
