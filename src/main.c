@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "em_device.h"
 #include "em_chip.h"
 #include "em_cmu.h"
@@ -30,7 +31,22 @@
 /////////////////////////////////////////////////////////////
 ////////////////////Globális változók////////////////////////
 
-typedef enum Direction{Up, Down, Forward} Dir;
+typedef enum {
+	DIRECTION_UP, DIRECTION_DOWN, DIRECTION_RIGHT
+} direction_t;
+
+typedef enum {
+	TURN_LEFT, TURN_RIGHT, TURN_NONE
+} turn_t;
+
+typedef enum {
+	SEGMENT_TOP,
+	SEGMENT_MIDDLE,
+	SEGMENT_BOTTOM,
+	SEGMENT_UPPER,
+	SEGMENT_LOWER,
+	SEGMENT_INVALID
+} segment_t;
 
 typedef struct {
 	int8_t x, y;
@@ -38,24 +54,24 @@ typedef struct {
 
 typedef struct {
 	vector2_t position;
-	Dir direction;
+	direction_t direction;
+	uint16_t score;
 } player_t;
 
-player_t ship = {.position = {0,1}, .direction = Forward};
+player_t ship;
 
 #define ASTEROID_COUNT 3 //ha ezt a számot 18-nál nagyobbra állítjuk, az megöli az aszteroida koordináta generáló függvényt,
-						// valamint minél nagyobb ez a szám annál valószínûbb, hogy végigvihetetlen pálya generálódik
+// valamint minél nagyobb ez a szám annál valószínûbb, hogy végigvihetetlen pálya generálódik
 vector2_t asteroids[ASTEROID_COUNT];
 
 SegmentLCD_SegmentData_TypeDef segmentField[7];
 
 #define BUTTON_PORT gpioPortB
-#define PB0 9
-#define PB1 10
+#define BUTTON_LEFT_PIN 9 //PB0
+#define BUTTON_RIGHT_PIN 10 //PB1
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
-
 
 volatile uint32_t msTicks; /* counts 1ms timeTicks */
 
@@ -65,184 +81,150 @@ void Delay(uint32_t dlyTicks);
  * @brief SysTick_Handler
  * Interrupt Service Routine for system tick counter
  ******************************************************************************/
-void SysTick_Handler(void)
+void SysTick_Handler(void) {
+	msTicks++; /* increment counter necessary in Delay()*/
+}
+
+volatile bool key_pressed_left;
+volatile bool key_pressed_right;
+
+bool keypress_any() {
+	return key_pressed_left || key_pressed_right;
+}
+
+typedef struct {
+	bool left, right;
+} keypress_t;
+
+void keypress_reset() {
+	key_pressed_left = false;
+	key_pressed_right = false;
+}
+
+keypress_t keypress_read_and_clear()
 {
-  msTicks++;       /* increment counter necessary in Delay()*/
+	NVIC_DisableIRQ(GPIO_EVEN_IRQn);
+	NVIC_DisableIRQ(GPIO_ODD_IRQn);
+	keypress_t keys;
+	keys.left = key_pressed_left;
+	keys.right = key_pressed_right;
+	keypress_reset();
+	NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+	NVIC_EnableIRQ(GPIO_ODD_IRQn);
+	return keys;
+}
+
+turn_t get_turn(keypress_t keys) {
+	if (keys.left) {
+		return TURN_LEFT;
+	} else if (keys.right) {
+		return TURN_RIGHT;
+	} else {
+		return TURN_NONE;
+	}
+}
+
+void GPIO_EVEN_IRQHandler() {
+	GPIO->IFC = GPIO->IF; //clear interrupt flag
+	key_pressed_left = false;
+	key_pressed_right = true;
+}
+
+void GPIO_ODD_IRQHandler() {
+	GPIO->IFC = GPIO->IF; //clear interrupt flag
+	key_pressed_left = true;
+	key_pressed_right = false;
 }
 
 /***************************************************************************//**
  * @brief Delays number of msTick Systicks (typically 1 ms)
  * @param dlyTicks Number of ticks to delay
  ******************************************************************************/
-void Delay(uint32_t dlyTicks)
-{
-  uint32_t curTicks;
+void Delay(uint32_t dlyTicks) {
+	uint32_t curTicks;
 
-  curTicks = msTicks;
-  while ((msTicks - curTicks) < dlyTicks) ;
-}
-
-void delay()
-{
-	Delay(100);
-}
-
-void lcd_demo()
-{
-
-	  SegmentLCD_Init(false);
-
-	  SegmentLCD_SegmentData_TypeDef segmentField[7];
-
-	  /* Infinite loop */
-	  while (1) {
-
-		  // Clear all segments
-		  for (uint8_t p = 0; p < 7; p++) {
-			  segmentField[p].raw = 0;
-			  displaySegmentField(segmentField);
-		  }
-
-		  // Turn on all segments one-by-one
-		  // Only one segment is turned on at any given time
-		  // Using 14 bit binary value
-		  for (uint8_t p = 0; p < 7; p++) {
-			  for (uint8_t s = 0; s < 15; s++) {
-				  segmentField[p].raw = 1 << s;
-				  displaySegmentField(segmentField);
-				  delay();
-			  }
-		  }
-
-		  // Turn on all segments one-by-one
-		  // All the previous segments are left turned on
-		  // Using dedicated bit field values
-		  for (uint8_t p = 0; p < 7; p++) {
-			  segmentField[p].a = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].b = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].c = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].d = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].e = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].f = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].g = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].h = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].j = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].k = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].m = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].n = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].p = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-
-			  segmentField[p].q = 1;
-			  displaySegmentField(segmentField);
-			  delay();
-		  }
-	  }
+	curTicks = msTicks;
+	while ((msTicks - curTicks) < dlyTicks)
+		;
 }
 
 /////////////////////////////////////////////////////////////////////
 ////////////////Aszteroida/Pálya generálás///////////////////////////
 
-int random(int min_num, int max_num)
-{
-    int result = 0, low_num = 0, hi_num = 0;
+int random(int min_num, int max_num) {
+	int result = 0, low_num = 0, hi_num = 0;
 
-    if (min_num < max_num)
-    {
-        low_num = min_num;
-        hi_num = max_num + 1; // include max_num in output
-    } else {
-        low_num = max_num + 1; // include max_num in output
-        hi_num = min_num;
-    }
+	if (min_num < max_num) {
+		low_num = min_num;
+		hi_num = max_num + 1; // include max_num in output
+	} else {
+		low_num = max_num + 1; // include max_num in output
+		hi_num = min_num;
+	}
 
-    result = (rand() % (hi_num - low_num)) + low_num;
-    return result;
+	result = (rand() % (hi_num - low_num)) + low_num;
+	return result;
 }
 
-void create_asteroids(){
+void reset_game() {
+	ship.position.x = 0;
+	ship.position.y = SEGMENT_MIDDLE;
+	ship.direction = DIRECTION_RIGHT;
+	for (int32_t i = 0; i < ASTEROID_COUNT; i++) {
+		asteroids[i].x = -1;
+		asteroids[i].y = SEGMENT_INVALID;
+	}
+}
+
+void reset_score() {
+	ship.score = 0;
+	SegmentLCD_Number(ship.score);
+}
+
+void create_asteroids() {
 	int8_t x, y;
-	x = random(1,6);/*az elsõ 14-szegmens kijelzõre nem teszünk aszteroidát, mert felesleges 1: a hajó mellé kerül, ekkor egyel kevesebb aszteroidát kell kikerülni 2: a hajóval egy mezõre kerül, ekkor azonnal vége a játéknak*/
-	y = random(0,4);/*kijelzõnként csak 5 szegmenst(középsõ kettõt egynek véve) használunk, a kijelzésnél az itt sorsolt számot dekódoljuk*/
+	x = random(1, 6);/*az elsõ 14-szegmens kijelzõre nem teszünk aszteroidát, mert felesleges 1: a hajó mellé kerül, ekkor egyel kevesebb aszteroidát kell kikerülni 2: a hajóval egy mezõre kerül, ekkor azonnal vége a játéknak*/
+	y = random(0, 4);/*kijelzõnként csak 5 szegmenst(középsõ kettõt egynek véve) használunk, a kijelzésnél az itt sorsolt számot dekódoljuk*/
 	asteroids[0].x = x;
 	asteroids[0].y = y;
 
-	int a_count[7] = {0};//az egy kijelzõn lévõ aszteroidák száma
+	int a_count[7] = { 0 }; //az egy kijelzõn lévõ aszteroidák száma
 	a_count[x]++;
 
-	for(int i = 1; i < ASTEROID_COUNT; i++){
-		x = random(1,6);
-		y = random(0,4);
+	for (int i = 1; i < ASTEROID_COUNT; i++) {
+		x = random(1, 6);
+		y = random(0, 4);
 
-		while(a_count[x] == 3){
-			x = random(1,6);
+		while (a_count[x] == 3) {
+			x = random(1, 6);
 		}
 
-		if(a_count[x] == 0){
+		if (a_count[x] == 0) {
 			asteroids[i].x = x;
 			asteroids[i].y = y;
 			a_count[x]++;
-		}
-		else if(a_count[x] == 1){
+		} else if (a_count[x] == 1) {
 			int z = 0;
-			while(!(asteroids[z].x == x)){
+			while (!(asteroids[z].x == x)) {
 				z++;
 			}
-			while(asteroids[z].y == y){
-				y = random(0,4);
+			while (asteroids[z].y == y) {
+				y = random(0, 4);
 			}
 			asteroids[i].x = x;
 			asteroids[i].y = y;
 			a_count[x]++;
-		}
-		else if(a_count[x] == 2){
+		} else if (a_count[x] == 2) {
 			int z = 0;
 			int ny[2];
-			for(int k = 0; k < i; k++){
-				if(asteroids[k].x == x){
+			for (int k = 0; k < i; k++) {
+				if (asteroids[k].x == x) {
 					ny[z] = asteroids[k].y;
 					z++;
 				}
 			}
-			while((y == ny[0]) || (y == ny[1])){
-				y = random(0,4);
+			while ((y == ny[0]) || (y == ny[1])) {
+				y = random(0, 4);
 			}
 			asteroids[i].x = x;
 			asteroids[i].y = y;
@@ -254,360 +236,314 @@ void create_asteroids(){
 ///////////////////////////////////////////////////////////////////
 /////////////////////Megjelenítés//////////////////////////////////
 //a megadott vektor  koordinátáinak megfelelõ szegmenst bekapcsolja
-void display(vector2_t vector){
+void display_segment(vector2_t vector) {
 	int x = vector.x;
 	int y = vector.y;
-	switch(y){
-		case 0:
-			segmentField[x].a = 1;
-			displaySegmentField(segmentField);
-			break;
-		case 1:
-			segmentField[x].g = 1;
-			segmentField[x].m = 1;
-			displaySegmentField(segmentField);
-			break;
-		case 2:
-			segmentField[x].d = 1;
-			displaySegmentField(segmentField);
-			break;
-		case 3:
-			segmentField[x].f = 1;
-			displaySegmentField(segmentField);
-			break;
-		case 4:
-			segmentField[x].e = 1;
-			displaySegmentField(segmentField);
-			break;
-		default: break;
+	switch (y) {
+	case SEGMENT_TOP:
+		segmentField[x].a = 1;
+		break;
+	case SEGMENT_MIDDLE:
+		segmentField[x].g = 1;
+		segmentField[x].m = 1;
+		break;
+	case SEGMENT_BOTTOM:
+		segmentField[x].d = 1;
+		break;
+	case SEGMENT_UPPER:
+		segmentField[x].f = 1;
+		break;
+	case SEGMENT_LOWER:
+		segmentField[x].e = 1;
+		break;
 	}
 }
+
+void update_display() {
+//minden szegmens törlése
+	for (int32_t i = 0; i < 7; i++) {
+		segmentField[i].raw = 0;
+	}
 
 //hajó kijelzése
-void display_ship(){
-	display(ship.position);
-}
+	display_segment(ship.position);
 
 //aszteroidák kijelzése
-void display_asteroids(){
-	for(int i = 0; i < ASTEROID_COUNT; i++)
-		display(asteroids[i]);
-}
-
-//törli a megadott vektort a kijelzõrõl
-void erase(vector2_t vector){
-	int x = vector.x;
-	int y = vector.y;
-	switch(y){
-		case 0:
-			segmentField[x].a = 0;
-			displaySegmentField(segmentField);
-			break;
-		case 1:
-			segmentField[x].g = 0;
-			segmentField[x].m = 0;
-			displaySegmentField(segmentField);
-			break;
-		case 2:
-			segmentField[x].d = 0;
-			displaySegmentField(segmentField);
-			break;
-		case 3:
-			segmentField[x].f = 0;
-			displaySegmentField(segmentField);
-			break;
-		case 4:
-			segmentField[x].e = 0;
-			displaySegmentField(segmentField);
-			break;
-		default: break;
+	for (int32_t i = 0; i < ASTEROID_COUNT; i++) {
+		display_segment(asteroids[i]);
 	}
-}
 
-//törli a hajót a kijelzõrõl
-void erase_ship(){
-	erase(ship.position);
-}
-
-//torli az aszteroidákat a kijelzõrõl
-void erase_asteroids(){
-	for(int i = 0; i < ASTEROID_COUNT; i++)
-		erase(asteroids[i]);
+	displaySegmentField(segmentField);
 }
 
 //beállítja a LED-eket annak megfelelõen, hogy merre fog fordulni a hajó
-void turn_signal(int turn){
-	if(turn < 0){
-		BSP_LedClear(0);
-		BSP_LedClear(1);
+void turn_signal(turn_t turn) {
+	return;
+	BSP_LedClear(0);
+	BSP_LedClear(1);
+	switch (turn) {
+	case TURN_LEFT:
 		BSP_LedSet(1);
-	}
-	if(turn > 0){
-		BSP_LedClear(0);
-		BSP_LedClear(1);
+		break;
+	case TURN_RIGHT:
 		BSP_LedSet(0);
-	}
-	if(turn == 0){
-		BSP_LedClear(0);
-		BSP_LedClear(1);
+		break;
+	case TURN_NONE:
+		break;
 	}
 }
 
 ///////////////////////////////////////////////////////
 ///////////////////////Mozgás/////////////////////////
 
-//gomb érzékelése, fordulás, még lehetne finomítani
-int turn_f(int turn){
-	int i = turn;
-
-	//balra
-	if(!(GPIO_PinInGet(BUTTON_PORT, PB0))){
-		i--;
-		return i;
-	}
-
-	//jobbra
-	else if(!(GPIO_PinInGet(BUTTON_PORT, PB1))){
-		i++;
-		return i;
-	}
-
-	return i;
+bool is_any_key_pressed() {
+	bool is_left_pressed = !GPIO_PinInGet(BUTTON_PORT, BUTTON_LEFT_PIN);
+	bool is_right_pressed = !GPIO_PinInGet(BUTTON_PORT, BUTTON_RIGHT_PIN);
+	return is_left_pressed || is_right_pressed;
 }
 
-//a hajó mozgásáért felelõs függvény
-void move(int turn){
-	erase_ship();
-	//nem akarunk fordulni
-	if(turn == 0){
-		if(ship.direction == Up || ship.direction == Down){
-			if(ship.position.y == 3)
-				ship.position.y = 4;
-			else if(ship.position.y == 4)
-				ship.position.y = 3;
+void wait_for_player() {
+	while (!is_any_key_pressed())
+		;
+	while (is_any_key_pressed())
+		;
+	while (!is_any_key_pressed())
+		;
+}
+
+void turn_ship(turn_t turn) {
+	switch (turn) {
+	case TURN_LEFT:
+		switch (ship.direction) {
+		case DIRECTION_UP:
+			break;
+		case DIRECTION_RIGHT:
+			ship.direction = DIRECTION_UP;
+			break;
+		case DIRECTION_DOWN:
+			ship.direction = DIRECTION_RIGHT;
+			break;
 		}
-		if(ship.direction == Forward)
+		break;
+	case TURN_RIGHT:
+		switch (ship.direction) {
+		case DIRECTION_UP:
+			ship.direction = DIRECTION_RIGHT;
+			break;
+		case DIRECTION_RIGHT:
+			ship.direction = DIRECTION_DOWN;
+			break;
+		case DIRECTION_DOWN:
+			break;
+		}
+		break;
+	case TURN_NONE:
+		break;
+	}
+}
+
+void move_ship(turn_t turn) {
+	switch (ship.direction) {
+	case DIRECTION_UP:
+		switch (ship.position.y) {
+		case SEGMENT_TOP:
+		case SEGMENT_BOTTOM:
+			ship.position.y = SEGMENT_LOWER;
 			ship.position.x++;
-	}
-
-	//balra akarunk fordulni
-	if(turn < 0){
-		if(ship.direction == Up){
-			if(ship.position.y == 3)
-				ship.position.y = 4;
-			else if(ship.position.y == 4)
-				ship.position.y = 3;
-		}
-
-		else if(ship.direction == Down){
-			if(ship.position.y == 3)
-				ship.position.y = 1;
-			if(ship.position.y == 4)
-				ship.position.y = 2;
-			ship.direction = Forward;
-		}
-
-		else if(ship.direction == Forward){
-			if(ship.position.y == 0){
-				ship.position.y = 4;
-			}
-			if(ship.position.y == 1){
-				ship.position.y = 3;
-			}
-			if(ship.position.y == 2){
-				ship.position.y = 4;
-			}
+			break;
+		case SEGMENT_MIDDLE:
+			ship.position.y = SEGMENT_UPPER;
 			ship.position.x++;
-			ship.direction = Up;
+			break;
+		case SEGMENT_UPPER:
+			ship.position.y = SEGMENT_LOWER;
+			break;
+		case SEGMENT_LOWER:
+			ship.position.y = SEGMENT_UPPER;
+			break;
 		}
-	}
-
-	//jobbra akarunk fordulni
-	if (turn > 0){
-		if(ship.direction == Up){
-			if(ship.position.y == 3)
-				ship.position.y = 0;
-			if(ship.position.y == 4)
-				ship.position.y = 1;
-			ship.direction = Forward;
-		}
-
-		else if(ship.direction == Down){
-			if(ship.position.y == 3)
-				ship.position.y = 4;
-			else if(ship.position.y == 4)
-				ship.position.y = 3;
-		}
-
-		else if(ship.direction == Forward){
-			if(ship.position.y == 0){
-				ship.position.y = 3;
-			}
-			if(ship.position.y == 1){
-				ship.position.y = 4;
-			}
-			if(ship.position.y == 2){
-				ship.position.y = 3;
-			}
+		break;
+	case DIRECTION_DOWN:
+		switch (ship.position.y) {
+		case SEGMENT_TOP:
+		case SEGMENT_BOTTOM:
+			ship.position.y = SEGMENT_UPPER;
 			ship.position.x++;
-			ship.direction = Down;
+			break;
+		case SEGMENT_MIDDLE:
+			ship.position.y = SEGMENT_LOWER;
+			ship.position.x++;
+			break;
+		case SEGMENT_UPPER:
+			ship.position.y = SEGMENT_LOWER;
+			break;
+		case SEGMENT_LOWER:
+			ship.position.y = SEGMENT_UPPER;
+			break;
+		}
+		break;
+	case DIRECTION_RIGHT:
+		switch (ship.position.y) {
+		case SEGMENT_TOP:
+		case SEGMENT_MIDDLE:
+		case SEGMENT_BOTTOM:
+			ship.position.x++;
+			break;
+		case SEGMENT_UPPER:
+			switch (turn) {
+			case TURN_LEFT:
+				ship.position.y = SEGMENT_MIDDLE;
+				break;
+			case TURN_RIGHT:
+				ship.position.y = SEGMENT_TOP;
+				break;
+			case TURN_NONE:
+				ship.position.y = SEGMENT_LOWER;
+				break;
+			}
+			break;
+		case SEGMENT_LOWER:
+			switch (turn) {
+			case TURN_LEFT:
+				ship.position.y = SEGMENT_BOTTOM;
+				break;
+			case TURN_RIGHT:
+				ship.position.y = SEGMENT_MIDDLE;
+				break;
+			case TURN_NONE:
+				ship.position.y = SEGMENT_UPPER;
+				break;
+			}
+			break;
+		}
+		break;
+	}
+}
+
+bool is_hit() {
+	for (int i = 0; i < ASTEROID_COUNT; i++) {
+		if ((ship.position.x == asteroids[i].x)
+				&& (ship.position.y == asteroids[i].y)) {
+			return true;
 		}
 	}
+	return false;
 }
 
-void is_hit(bool* end){
-	for(int i = 0; i < ASTEROID_COUNT; i++){
-		if((ship.position.x == asteroids[i].x) & (ship.position.y == asteroids[i].y)){
-			*end = true;
-		}
+void show_dots(bool value) {
+	static uint32_t dot_ids[] = { LCD_SYMBOL_DP2, LCD_SYMBOL_DP3,
+			LCD_SYMBOL_DP4, LCD_SYMBOL_DP5, LCD_SYMBOL_DP6, 0 };
+	for (uint32_t i = 0; dot_ids[i] != 0; i++) {
+		SegmentLCD_Symbol(dot_ids[i], value ? 1 : 0);
 	}
 }
 
-int level_up(int score){
-	if(ship.position.x == 7){
-		erase_asteroids();
-		ship.position.x = 0;
-		score++;
-		create_asteroids(asteroids);
-		display_asteroids();
-		display_ship();
-		SegmentLCD_Number(score);
-		return score;
+void show_message_and_wait(const char* msg, bool blink_dots) {
+	static char text_scroller[100];
+#define WHITESPACE "   "
+	uint32_t msg_len = strlen(msg);
+	if (msg_len * 2 + strlen(WHITESPACE) * 2 + 1 > sizeof(text_scroller)) {
+		return; //message is too large for the text_scroller buffer
 	}
-	else{
-		display_ship();
-		return score;
-	}
-}
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-
-void over(){
-	erase_ship();
-	erase_asteroids();
-	BSP_LedClear(0);
-	BSP_LedClear(1);
-	for(int i = 0; i < 5; i++){
-		SegmentLCD_Write("GAME");
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP2, 1);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP3, 1);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP4, 1);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP5, 1);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP6, 1);
+	snprintf(text_scroller, sizeof(text_scroller),
+	WHITESPACE "%s" WHITESPACE "%s", msg, msg);
+	uint32_t text_scroller_len = strlen(WHITESPACE) + msg_len;
+	keypress_reset();
+	for (uint32_t i = 0; !keypress_any(); i++) {
+		static char screen_text[8];
+		snprintf(screen_text, sizeof(screen_text),
+				text_scroller + (i % text_scroller_len));
+		SegmentLCD_Write(screen_text);
+		show_dots(blink_dots && (i % 2) == 0);
 		Delay(1000);
-		SegmentLCD_Write("OVER");
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP2, 0);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP3, 0);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP4, 0);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP5, 0);
-	    SegmentLCD_Symbol(LCD_SYMBOL_DP6, 0);
-		Delay(1000);
-
 	}
-	SegmentLCD_AllOff();
 }
 
+void animate_timer() {
+	for (int32_t ring_segment = 0; ring_segment < 8; ring_segment++) {
+		SegmentLCD_ARing(ring_segment, 1);
+	}
+	for (int32_t time = 7; time >= 0; time--) {
+		Delay(400);
+		SegmentLCD_ARing(time, 0);
+	}
+}
+
+bool is_goal_reached() {
+	return ship.position.x == 7;
+}
+
+void increment_score() {
+	ship.score++;
+	SegmentLCD_Number(ship.score);
+}
+
+uint32_t get_delay_ticks()
+{
+	uint32_t ticks = 2000-ship.score*20;
+	if(ticks < 1000)
+	{
+		ticks = 1000;
+	}
+	return ticks;
+}
 
 /***************************************************************************//**
  * @brief  Main function
  ******************************************************************************/
-int main(void)
-{
-  /* Chip errata */
-  CHIP_Init();
+int main(void) {
+	/* Chip errata */
+	CHIP_Init();
 
-  /* If first word of user data page is non-zero, enable eA Profiler trace */
-  BSP_TraceProfilerSetup();
+	/*Initialize LCD Display*/
+	SegmentLCD_Init(false);
 
-  /*Initialize LCD Display*/
-  SegmentLCD_Init(false);
+	/* Setup SysTick Timer for 1 msec interrupts  */
+	if (SysTick_Config(CMU_ClockFreqGet(cmuClock_CORE) / 1000)) {
+		while (1)
+			;
+	}
 
-  /* Setup SysTick Timer for 1 msec interrupts  */
-  if (SysTick_Config(CMU_ClockFreqGet(cmuClock_CORE) / 1000)) {
-    while (1) ;
-  }
+	CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);
 
-  CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);
+	// Enable GPIO peripheral clock
+	CMU_ClockEnable(cmuClock_GPIO, true);
 
-  // Enable GPIO peripheral clock
-  CMU_ClockEnable(cmuClock_GPIO, true);
+	GPIO_PinModeSet(BUTTON_PORT, BUTTON_LEFT_PIN, gpioModeInput, 0);
+	GPIO_PinModeSet(BUTTON_PORT, BUTTON_RIGHT_PIN, gpioModeInput, 0);
 
-  // Configure PB0 as input with pull-up enabled
-  GPIO_PinModeSet(BUTTON_PORT, PB0, gpioModeInputPull, 1);
-  // Configure PB1 as input with pull-up enabled
-  GPIO_PinModeSet(BUTTON_PORT, PB1, gpioModeInputPull, 1);
+	/* Initialize LED driver */
+	BSP_LedsInit();
 
-  /* Initialize LED driver */
-  BSP_LedsInit();
+	//felfutó élek figyelése
+	GPIO_ExtIntConfig(BUTTON_PORT, BUTTON_LEFT_PIN, BUTTON_LEFT_PIN, 1, 0, 1);
+	GPIO_ExtIntConfig(BUTTON_PORT, BUTTON_RIGHT_PIN, BUTTON_RIGHT_PIN, 1, 0, 1);
+	NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+	NVIC_EnableIRQ(GPIO_ODD_IRQn);
 
-  /* Enable all segments */
-  SegmentLCD_AllOn();
-  BSP_LedSet(0);
-  BSP_LedSet(1);
-  Delay(2000);
-
-  /* Disable all segments */
-  SegmentLCD_AllOff();
-  BSP_LedClear(0);
-  BSP_LedClear(1);
-  Delay(2000);
-
-
-  int score = 0;
-  int turn = 0;
-  int a = 0;
-  int turn_before = 0;
-  bool end = false;
-
-  create_asteroids();
-
-  display_ship();
-  display_asteroids();
-  SegmentLCD_Number(score);
-
-  while (!end) {
-	  turn = 0;
-	  BSP_LedClear(0);
-	  BSP_LedClear(1);
-	  if(score < 10){
-		  a = 1000000 - (100000 * score);
-		  while(a > 0){
-		  	  turn_before = turn;
-		  	  turn = turn_f(turn);
-		  	  if(!(turn_before == turn))
-			  	  turn_signal(turn);
-		  a--;
-	  	  }
-	  }
-	  else if((score >= 10) && (score < 31)){
-		  a = 100000 - (3000 * score);
-		  while(a > 0){
-		   	  turn_before = turn;
-		   	  turn = turn_f(turn);
-		   	  if(!(turn_before == turn))
-		   		  turn_signal(turn);
-		   	  a--;
-		  }
-	  }
-	  else if(score >= 31){
-		  a = 10000;
-		  while(a > 0){
-			  turn_before = turn;
-		  	  turn = turn_f(turn);
-		  	  if(!(turn_before == turn))
-		  		  turn_signal(turn);
-		  	  a--;
-		  	  }
-	  }
-
-	  move(turn);
-	  score = level_up(score);
-	  is_hit(&end);
-  }
-
-  over();
-
+	show_message_and_wait("WELCOME  PRESS ANY KEY", false);
+start_new_game:
+	reset_score();
+start_new_level:
+	reset_game();
+	keypress_read_and_clear();
+	create_asteroids();
+	update_display();
+	animate_timer();
+	do {
+		Delay(get_delay_ticks());
+		keypress_t keys = keypress_read_and_clear();
+		turn_t turn = get_turn(keys);
+		turn_ship(turn);
+		move_ship(turn);
+		update_display();
+		if (is_goal_reached()) {
+			increment_score();
+			goto start_new_level;
+		}
+	} while (!is_hit());
+	reset_game();
+	show_message_and_wait("GAME OVER", true);
+	show_dots(false);
+	goto start_new_game;
 }
