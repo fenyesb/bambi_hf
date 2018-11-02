@@ -14,14 +14,17 @@
 #include "segmentlcd.h"
 #include "segmentlcd_spec.h"
 
+//A mozgásirány változói
 typedef enum {
 	DIRECTION_UP, DIRECTION_DOWN, DIRECTION_RIGHT
 } direction_t;
 
+//A fordulás változói
 typedef enum {
 	TURN_LEFT, TURN_RIGHT, TURN_NONE
 } turn_t;
 
+//A szegmenseket leíró változók
 typedef enum {
 	SEGMENT_TOP,
 	SEGMENT_MIDDLE,
@@ -31,18 +34,22 @@ typedef enum {
 	SEGMENT_INVALID
 } segment_t;
 
+//Vektor struktúra
 typedef struct {
 	int8_t x, y;
 } vector2_t;
 
+//A játékost/hajót leíró struktúra, mely tartalmazza a hajó
+//koordinátáit, irányát és a szerzett pontokat
 typedef struct {
 	vector2_t position;
 	direction_t direction;
 	uint16_t score;
 } player_t;
 
-player_t ship;
+player_t ship = {{0,SEGMENT_MIDDLE}, DIRECTION_RIGHT, 0};
 
+//Az aszteroidák száma és az azokat tartalmazó tömb
 #define ASTEROID_COUNT 3
 vector2_t asteroids[ASTEROID_COUNT];
 
@@ -74,6 +81,7 @@ void keypress_reset() {
 	key_pressed_right = false;
 }
 
+//A gomb megnyomásának megfelelően állítja a keys megfelelő elemeit
 keypress_t keypress_read_and_clear() {
 	NVIC_DisableIRQ(GPIO_EVEN_IRQn);
 	NVIC_DisableIRQ(GPIO_ODD_IRQn);
@@ -86,6 +94,7 @@ keypress_t keypress_read_and_clear() {
 	return keys;
 }
 
+//Beállítja a hajó fordulásának irányát
 turn_t get_turn(keypress_t keys) {
 	if (keys.left) {
 		return TURN_LEFT;
@@ -120,9 +129,7 @@ void Delay(uint32_t dlyTicks) {
 		;
 }
 
-/////////////////////////////////////////////////////////////////////
-////////////////Aszteroida/Pálya generálás///////////////////////////
-
+//Véletlenszerű számot generál a megadott értékek között
 int random(int min_num, int max_num) {
 	int result = 0, low_num = 0, hi_num = 0;
 
@@ -138,6 +145,7 @@ int random(int min_num, int max_num) {
 	return result;
 }
 
+//A hajót az első kijelző körépső szegmensére helyezi és törli az aszteroidákat
 void reset_game() {
 	ship.position.x = 0;
 	ship.position.y = SEGMENT_MIDDLE;
@@ -148,54 +156,68 @@ void reset_game() {
 	}
 }
 
+//Lényegében a reset_game függvény szintlépéskor használt változata
+void level_up(){
+	ship.position.x = 0;
+	for (int32_t i = 0; i < ASTEROID_COUNT; i++) {
+		asteroids[i].x = -1;
+		asteroids[i].y = SEGMENT_INVALID;
+	}
+}
+
+//Nullázza a pontokat
 void reset_score() {
 	ship.score = 0;
 	SegmentLCD_Number(ship.score);
 }
 
+//Az aszteroidák generálására használt függvény
 void create_asteroids() {
 	int8_t x, y;
-	x = random(1, 6); //az első 14-szegmens kijelzõre nem teszünk aszteroidát, mert felesleges 1: a hajó mellé kerül, ekkor egyel kevesebb aszteroidát kell kikerülni 2: a hajóval egy mezõre kerül, ekkor azonnal vége a játéknak
-	y = random(0, 4); //kijelzőnként csak 5 szegmenst(középsõ kettõt egynek véve) használunk, a kijelzésnél az itt sorsolt számot dekódoljuk
+	x = random(1, 6); //Az első 14-szegmens kijelzõre nem teszünk aszteroidát, mert felesleges:
+					//1.: a hajó mellé kerül, ekkor egyel kevesebb aszteroidát kell kikerülni 2.: a hajóval egy mezõre kerül, ekkor azonnal vége a játéknak
+	y = random(0, 4); //Kijelzőnként csak 5 szegmenst(középsõ kettõt egynek véve) használunk, a kijelzésnél az itt sorsolt számot dekódoljuk
 	asteroids[0].x = x;
 	asteroids[0].y = y;
 
-	int a_count[7] = { 0 }; //az egy kijelzőn lévõ aszteroidák száma
-	a_count[x]++;
+	int a_count[7] = { 0 }; //Az egy kijelzőn lévõ aszteroidák száma
+	a_count[x]++;//A tömb indexelése 0-tól 6-ig megy éppen mint a kijelzőké, így használható az aszteroida x koordinátája mint index
 
+	//A maradék két aszteroida koordinátáinak sorsolása
 	for (int i = 1; i < ASTEROID_COUNT; i++) {
 		x = random(1, 6);
 		y = random(0, 4);
 
 		while (a_count[x] == 3) {
 			x = random(1, 6);
-		}
+		}//maximum 3 aszteroida lehet egy kijelzőn, ezért azt figyeljük, hogy van-e annyi
+		//ez abban az esetben nyer igazán értelmet, ha feljebb állítjuk az aszteroidák számát
 
-		if (a_count[x] == 0) {
+		if (a_count[x] == 0) {//Nulla aszteroida van az adott kijelzőn
 			asteroids[i].x = x;
 			asteroids[i].y = y;
 			a_count[x]++;
-		} else if (a_count[x] == 1) {
+		} else if (a_count[x] == 1) {//Egy aszteroida van az adott kijelzőn
 			int z = 0;
-			while (!(asteroids[z].x == x)) {
+			while (!(asteroids[z].x == x)) {//Kikeressük azt az aszteroidát a tömbből, amelyiknek az x koordínátája megegyezik az újonnan sorsolt x koordinátával
 				z++;
 			}
-			while (asteroids[z].y == y) {
-				y = random(0, 4);
+			while (asteroids[z].y == y) {//Ellenőrizzük, hogy a már meglévő aszteroida y koordinátája megegyezik-e az új y-nal
+				y = random(0, 4);//Ha igen, akkor új y-t sorsolunk
 			}
 			asteroids[i].x = x;
 			asteroids[i].y = y;
 			a_count[x]++;
-		} else if (a_count[x] == 2) {
+		} else if (a_count[x] == 2) {//Már kettő aszteroida is van az adott kijelzőn
 			int z = 0;
 			int ny[2];
-			for (int k = 0; k < i; k++) {
+			for (int k = 0; k < i; k++) {//Az említett két aszteroida kikeresése a tömbből
 				if (asteroids[k].x == x) {
-					ny[z] = asteroids[k].y;
+					ny[z] = asteroids[k].y;//A két aszteroida y koordínátáinak eltárolása egy tömbben
 					z++;
 				}
 			}
-			while ((y == ny[0]) || (y == ny[1])) {
+			while ((y == ny[0]) || (y == ny[1])) {//Ha a már meglévő aszteroidák bármelyikének y koordinitájával egyezik az új y, akkor újat generálunk
 				y = random(0, 4);
 			}
 			asteroids[i].x = x;
@@ -205,7 +227,7 @@ void create_asteroids() {
 	}
 }
 
-//a megadott vektor koordinátáinak megfelelő szegmenst bekapcsolja
+//A megadott vektor koordinátáinak megfelelő szegmenst bekapcsolja
 void display_segment(vector2_t vector) {
 	int x = vector.x;
 	int y = vector.y;
@@ -229,16 +251,17 @@ void display_segment(vector2_t vector) {
 	}
 }
 
+//Frissíti a kijelző állapotát a változásoknak megfelelően
 void update_display() {
-	//minden szegmens törlése
+	//Minden szegmens törlése
 	for (int32_t i = 0; i < 7; i++) {
 		segmentField[i].raw = 0;
 	}
 
-	//hajó kijelzése
+	//Hajó kijelzése
 	display_segment(ship.position);
 
-	//aszteroidák kijelzése
+	//Aszteroidák kijelzése
 	for (int32_t i = 0; i < ASTEROID_COUNT; i++) {
 		display_segment(asteroids[i]);
 	}
@@ -246,29 +269,14 @@ void update_display() {
 	displaySegmentField(segmentField);
 }
 
-//beállítja a LED-eket annak megfelelően, hogy merre fog fordulni a hajó
-void turn_signal(turn_t turn) {
-	return;
-	BSP_LedClear(0);
-	BSP_LedClear(1);
-	switch (turn) {
-	case TURN_LEFT:
-		BSP_LedSet(1);
-		break;
-	case TURN_RIGHT:
-		BSP_LedSet(0);
-		break;
-	case TURN_NONE:
-		break;
-	}
-}
-
+//Figyeli, hogy megnyumtuk-e bármelyik irányváltó gombot
 bool is_any_key_pressed() {
 	bool is_left_pressed = !GPIO_PinInGet(BUTTON_PORT, BUTTON_LEFT_PIN);
 	bool is_right_pressed = !GPIO_PinInGet(BUTTON_PORT, BUTTON_RIGHT_PIN);
 	return is_left_pressed || is_right_pressed;
 }
 
+//A játék indításakor kért gombnyomásra vár
 void wait_for_player() {
 	while (!is_any_key_pressed())
 		;
@@ -278,11 +286,12 @@ void wait_for_player() {
 		;
 }
 
+//A hajó fordulásának irányát írja be a hajó megfelelő változójába
 void turn_ship(turn_t turn) {
 	switch (turn) {
 	case TURN_LEFT:
 		switch (ship.direction) {
-		case DIRECTION_UP:
+		case DIRECTION_UP://Ha felfelé mozog a hajó nem fordulhat balra
 			break;
 		case DIRECTION_RIGHT:
 			ship.direction = DIRECTION_UP;
@@ -300,7 +309,7 @@ void turn_ship(turn_t turn) {
 		case DIRECTION_RIGHT:
 			ship.direction = DIRECTION_DOWN;
 			break;
-		case DIRECTION_DOWN:
+		case DIRECTION_DOWN://Ha lefelé mozog a hajó nem fordulhat jobbra
 			break;
 		}
 		break;
@@ -309,6 +318,7 @@ void turn_ship(turn_t turn) {
 	}
 }
 
+//Ez a függvény írja le a hajó mozgására megadott korlátozásokat és végzi el a hajó koordinátáin való változtatásokat, vagyis ez "mozgatja" a hajót
 void move_ship(turn_t turn) {
 	switch (ship.direction) {
 	case DIRECTION_UP:
@@ -387,6 +397,7 @@ void move_ship(turn_t turn) {
 	}
 }
 
+//Figyeli, hogy nekimentünk-e valamelyik aszteroidának
 bool is_hit() {
 	for (int i = 0; i < ASTEROID_COUNT; i++) {
 		if ((ship.position.x == asteroids[i].x)
@@ -397,6 +408,7 @@ bool is_hit() {
 	return false;
 }
 
+//A pontokat villogtatja
 void show_dots(bool value) {
 	static uint32_t dot_ids[] = { LCD_SYMBOL_DP2, LCD_SYMBOL_DP3,
 			LCD_SYMBOL_DP4, LCD_SYMBOL_DP5, LCD_SYMBOL_DP6, 0 };
@@ -405,6 +417,7 @@ void show_dots(bool value) {
 	}
 }
 
+//Kiírja a megadott üzenetet, a kijelzőn jobbról balra úsztatva, és vár egy külső akcióra
 void show_message_and_wait(const char* msg, bool blink_dots) {
 	static char text_scroller[100];
 #define WHITESPACE "   "
@@ -436,15 +449,18 @@ void animate_timer() {
 	}
 }
 
+//A cél {8. (nem létező) kijelző} elérését figyeli
 bool is_goal_reached() {
 	return ship.position.x == 7;
 }
 
+//Növeli a pontot eggyel
 void increment_score() {
 	ship.score++;
 	SegmentLCD_Number(ship.score);
 }
 
+//A hajó sebességének szabályozása
 uint32_t get_delay_ticks() {
 	uint32_t ticks = 2000 - ship.score * 20;
 	if (ticks < 1000) {
@@ -487,7 +503,7 @@ int main(void) {
 	do {
 		reset_score();
 start_new_level:
-		reset_game();
+		level_up();
 		keypress_read_and_clear();
 		create_asteroids();
 		update_display();

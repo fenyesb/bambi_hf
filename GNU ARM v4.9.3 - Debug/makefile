@@ -26,35 +26,35 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: bambi_hf.axf
+all: bambi_hf_v2.axf
 
 # Tool invocations
-bambi_hf.axf: $(OBJS) $(USER_OBJS)
+bambi_hf_v2.axf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU ARM C Linker'
-	arm-none-eabi-gcc -g -gdwarf-2 -mcpu=cortex-m3 -mthumb -T "bambi_hf.ld" -Xlinker --gc-sections -Xlinker -Map="bambi_hf.map" --specs=nano.specs -o bambi_hf.axf "./BSP/bsp_bcc.o" "./BSP/bsp_stk.o" "./BSP/bsp_stk_leds.o" "./BSP/bsp_trace.o" "./CMSIS/EFM32GG/startup_gcc_efm32gg.o" "./CMSIS/EFM32GG/system_efm32gg.o" "./emlib/em_assert.o" "./emlib/em_cmu.o" "./emlib/em_ebi.o" "./emlib/em_emu.o" "./emlib/em_gpio.o" "./emlib/em_lcd.o" "./emlib/em_system.o" "./emlib/em_usart.o" "./src/main.o" "./src/segmentlcd.o" 
+	arm-none-eabi-gcc -g -gdwarf-2 -mcpu=cortex-m3 -mthumb -T "bambi_hf_v2.ld" -Xlinker --gc-sections -Xlinker -Map="bambi_hf_v2.map" --specs=nano.specs -o bambi_hf_v2.axf "./BSP/bsp_bcc.o" "./BSP/bsp_stk.o" "./BSP/bsp_stk_leds.o" "./CMSIS/EFM32GG/startup_gcc_efm32gg.o" "./CMSIS/EFM32GG/system_efm32gg.o" "./emlib/em_assert.o" "./emlib/em_cmu.o" "./emlib/em_emu.o" "./emlib/em_gpio.o" "./emlib/em_lcd.o" "./emlib/em_system.o" "./emlib/em_usart.o" "./src/main.o" "./src/segmentlcd.o" -Wl,--start-group -lgcc -lc -lnosys -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-	@echo 'Building hex file: bambi_hf.hex'
-	arm-none-eabi-objcopy -O ihex "bambi_hf.axf" "bambi_hf.hex"
+	@echo 'Building hex file: bambi_hf_v2.hex'
+	arm-none-eabi-objcopy -O ihex "bambi_hf_v2.axf" "bambi_hf_v2.hex"
 	@echo ' '
 
-	@echo 'Building bin file: bambi_hf.bin'
-	arm-none-eabi-objcopy -O binary "bambi_hf.axf" "bambi_hf.bin"
+	@echo 'Building bin file: bambi_hf_v2.bin'
+	arm-none-eabi-objcopy -O binary "bambi_hf_v2.axf" "bambi_hf_v2.bin"
 	@echo ' '
 
-	@echo 'Building s37 file: bambi_hf.s37'
-	arm-none-eabi-objcopy -O srec "bambi_hf.axf" "bambi_hf.s37"
+	@echo 'Building s37 file: bambi_hf_v2.s37'
+	arm-none-eabi-objcopy -O srec "bambi_hf_v2.axf" "bambi_hf_v2.s37"
 	@echo ' '
 
 	@echo 'Running size tool'
-	arm-none-eabi-size "bambi_hf.axf"
+	arm-none-eabi-size "bambi_hf_v2.axf"
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) bambi_hf.axf
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) bambi_hf_v2.axf
 	-@echo ' '
 
 .PHONY: all clean dependents
