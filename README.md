@@ -49,6 +49,12 @@ Indítás után az űrhajó egy megadott kezdeti sebességgel halad. Pályája a
 * kód feldarabolása kisebb függvényekre
 * lehetőség van a játék újraindítására
 
+2018-11 *Fliegl Attila*
+* kommentezés
+
+2018-11-07 *Fényes Balázs*
+* kód szétbontása .h és .c állományokra
+
 Hibák:
 * a lépések közötti időzítés késleltetéssel van megoldva, és nem interrupt-tal
 * a LED-ek kezelését kivettem, mert már túl sok helyen kellene a kódot átírni, hogy a LED-ek minden helyzetben jól működjenek

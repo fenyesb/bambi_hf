@@ -1,6 +1,6 @@
-emlib/em_gpio.o: \
- C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.4/platform/emlib/src/em_gpio.c \
- c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_gpio.h \
+src/segmentlcd_individual.o: ../src/segmentlcd_individual.c \
+ ../src/segmentlcd_individual.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_lcd.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg990f1024.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\cmsis\include\core_cm3.h \
@@ -55,11 +55,11 @@ emlib/em_gpio.o: \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_dmactrl.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_uart.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_af_ports.h \
- c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_af_pins.h \
- c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_bus.h \
- c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_assert.h
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_af_pins.h
 
-c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_gpio.h:
+../src/segmentlcd_individual.h:
+
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_lcd.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\em_device.h:
 
@@ -170,7 +170,3 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_af_ports.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg_af_pins.h:
-
-c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_bus.h:
-
-c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_assert.h:

@@ -1,4 +1,4 @@
-src/main.o: ../src/main.c \
+src/main.o: ../src/main.c ../src/common.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_chip.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg990f1024.h \
@@ -60,14 +60,18 @@ src/main.o: ../src/main.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_bus.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_assert.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_cmu.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_i2c.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\common\bsp\bsp.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\efm32gg_stk3700\config\bspconfig.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\common\bsp\bsp_bcp.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_usart.h \
- ../src/segmentlcd.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\common\drivers\segmentlcd.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\efm32gg_stk3700\config\segmentlcdconfig.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_lcd.h \
- ../src/segmentlcd_spec.h
+ ../src/segmentlcd_individual.h ../src/game_logic.h ../src/input.h \
+ ../src/display.h ../src/timing.h
+
+../src/common.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_chip.h:
 
@@ -191,6 +195,8 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_cmu.h:
 
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_i2c.h:
+
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\common\bsp\bsp.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\efm32gg_stk3700\config\bspconfig.h:
@@ -199,10 +205,18 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_usart.h:
 
-../src/segmentlcd.h:
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\common\drivers\segmentlcd.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\hardware\kit\efm32gg_stk3700\config\segmentlcdconfig.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_lcd.h:
 
-../src/segmentlcd_spec.h:
+../src/segmentlcd_individual.h:
+
+../src/game_logic.h:
+
+../src/input.h:
+
+../src/display.h:
+
+../src/timing.h:

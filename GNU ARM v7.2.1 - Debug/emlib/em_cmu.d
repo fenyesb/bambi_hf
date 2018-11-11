@@ -1,4 +1,5 @@
-emlib/em_cmu.o: ../emlib/em_cmu.c \
+emlib/em_cmu.o: \
+ C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.4/platform/emlib/src/em_cmu.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_cmu.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg990f1024.h \
@@ -60,9 +61,10 @@ emlib/em_cmu.o: ../emlib/em_cmu.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_gpio.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_assert.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_bus.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_common.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_emu.h \
- c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_system.h \
- c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_common.h
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_gpio.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_system.h
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_cmu.h:
 
@@ -186,8 +188,10 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_bus.h:
 
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_common.h:
+
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_emu.h:
 
-c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_system.h:
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_gpio.h:
 
-c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_common.h:
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_system.h:

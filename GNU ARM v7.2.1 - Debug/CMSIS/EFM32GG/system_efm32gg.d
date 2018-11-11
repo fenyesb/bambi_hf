@@ -1,4 +1,5 @@
-CMSIS/EFM32GG/system_efm32gg.o: ../CMSIS/EFM32GG/system_efm32gg.c \
+CMSIS/EFM32GG/system_efm32gg.o: \
+ C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.4/platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg990f1024.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\cmsis\include\core_cm3.h \

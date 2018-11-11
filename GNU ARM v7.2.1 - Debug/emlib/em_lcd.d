@@ -1,4 +1,5 @@
-emlib/em_lcd.o: ../emlib/em_lcd.c \
+emlib/em_lcd.o: \
+ C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.4/platform/emlib/src/em_lcd.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\emlib\inc\em_lcd.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.4\platform\device\siliconlabs\efm32gg\include\efm32gg990f1024.h \
